@@ -1,0 +1,35 @@
+{
+    "require": {
+        "php": ">= 7.1.0",
+        "yourivw/LEClient": "1.1.*",
+        "namecheap/namecheap": "dev-master",
+        "gellu/godaddy-api-client": "dev-master"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~5.7"
+    },
+    "autoload": {
+        "files": [
+            "libs/DNS_Utility.php"
+        ],
+        "classmap": [
+            "libs/LetsEncrypt/Host/exceptions",
+            "libs/LetsEncrypt/Host",
+            "libs/LetsEncrypt/Providers",
+            "libs/LetsEncrypt/Providers/Godaddy",
+            "libs/LetsEncrypt/Providers/Namecheap"
+        ]
+    },
+    "config": {
+        "bin-dir": "bin/"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "no-api": true,
+            "url": "git@github.com:KnightAR/godaddy-api-client.git"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

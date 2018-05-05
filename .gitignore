@@ -1,0 +1,7 @@
+vendor/
+build/
+.idea
+bin/
+.DS_Store
+config.php
+keys/
