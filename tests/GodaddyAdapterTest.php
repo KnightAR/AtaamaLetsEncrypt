@@ -13,8 +13,8 @@ class GodaddyAdapterTest extends \PHPUnit_Framework_TestCase
     public function getOptions($options)
     {
         return array_merge($options, [
-            'apiuser' => 'qwertyuiopasdfghjklzxcvbnm',
-            'apikey' => 'qwertyuiopASDFGHJKLZXCVBNM'
+            'apikey' => 'qwertyuiopasdfghjklzxcvbnm',
+            'apisecret' => 'qwertyuiopASDFGHJKLZXCVBNM'
         ]);
     }
 

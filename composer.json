@@ -13,6 +13,7 @@
             "libs/DNS_Utility.php"
         ],
         "classmap": [
+            "libs/ataama",
             "libs/LetsEncrypt/Host/exceptions",
             "libs/LetsEncrypt/Host",
             "libs/LetsEncrypt/Providers",

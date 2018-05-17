@@ -103,7 +103,6 @@ EOF;
 
         $apiResponse = new \Namecheap\Api\Response($xml);
 
-        //var_dump($apiResponse);
         $mock = $this->getConfiguration();
 
         $mock->expects($this->any())
@@ -166,7 +165,6 @@ EOF;
     /**
      * @test
      */
-
     public function testAddRecords()
     {
         $mock = $this->getConfiguration();
@@ -275,10 +273,6 @@ EOF;
 
         $dnsMock = $this->getDNS();
 
-        /*$dnsMock->expects($this->at(1))
-            ->method('dnsqr')
-            ->will($this->returnValue(['ns1.example.com.', 'ns2.example.com.']));*/
-
         $dnsMock->expects($this->atMost(5))
             ->method('dnsqr')
             ->will($this->returnValue(['acmetest']));
@@ -307,13 +301,10 @@ EOF;
         $adapter->addOrReplaceRecords($records);
 
         $hosts = $adapter->getHosts();
-        //print_r($hosts);
+
         $this->assertInstanceOf('\LetsEncrypt\Host\HostVerificationEntries', $hosts);
 
         foreach($hosts as $i => $host) {
-            //var_dump($host);
-            //$this->assertEquals(true, $host->isVerified());
-
             $expected = $records[$i];
             $this->assertInstanceOf("\LetsEncrypt\Providers\Namecheap\RecordConverter", $host);
 
@@ -329,6 +320,9 @@ EOF;
         }
     }
 
+    /**
+     * @test
+     */
     public function testRecordConverter()
     {
         $assoc = [
@@ -360,6 +354,8 @@ EOF;
     }
 
     /**
+     * @test
+     * @throws \ErrorException
      * @throws \LetsEncrypt\Host\exceptions\HostEntryException
      */
     public function testFailuresPush()
@@ -445,7 +441,8 @@ EOF;
 
 
     /**
-     * @throws \LetsEncrypt\Host\exceptions\HostEntryException
+     * @test
+     * @throws \Exception
      */
     public function testFailureGet()
     {

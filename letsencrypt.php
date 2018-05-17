@@ -4,31 +4,73 @@ require 'vendor/autoload.php';
 require_once('./config.inc.php');
 require_once('vendor/yourivw/leclient/LEClient/LEClient.php');
 
+$acmeURL = LEClient::LE_PRODUCTION;
+
 foreach($config['certs'] as $cert) {
     $domain = $domains[$cert['domain']];
+    $hosts = [];
+
+    $certDomain = null;
+    foreach($cert['hosts'] as $host) {
+        $dom = NULL;
+        if (is_null($host)) {
+            $dom = $cert['domain'];
+        } else {
+            $dom = sprintf('%s.%s', $host, $cert['domain']);
+        }
+        $hosts[] = $dom;
+        if (is_null($certDomain) && !preg_match('#^\*\.#', $dom)) {
+            $certDomain = $dom;
+        }
+    }
+    if (is_null($certDomain)) {
+        $dom = reset($cert['hosts']);
+        $certDomain = sprintf('%s.%s', str_replace('*.', '__WILDCARD__', $dom), $cert['domain']);
+    }
+
+    $keysDir = dirname(__FILE__) . ($acmeURL === LEClient::LE_PRODUCTION ? '/keys' : '/staging_keys');
+    if (!is_dir($keysDir)) {
+        @mkdir($keysDir, 0777, true);
+        LEFunctions::createhtaccess($keysDir);
+    }
+
+    $accountDir = $keysDir . '__account/';
+    if (!is_dir($accountDir)) {
+        @mkdir($accountDir, 0777, true);
+        LEFunctions::createhtaccess($accountDir);
+    }
+    if (!is_writable($keysDir)) {
+        throw new ErrorException("{$keysDir} is not writable");
+    }
+
+    $certificateKeys = $keysDir . '/domains/' . $certDomain;
+    if (!is_dir($certificateKeys)) {
+        @mkdir($certificateKeys, 0777, true);
+        LEFunctions::createhtaccess($certificateKeys);
+    }
+
+    $accountKeys = [
+        'private_key' => $keysDir . 'private.pem',
+        'public_key' => $keysDir . 'public.pem',
+    ];
+
+    $certificateKeys = array(
+        "public_key" => $certificateKeys.'/public.pem',
+        "private_key" => $certificateKeys.'/private.pem',
+        "certificate" => $certificateKeys.'/certificate.crt',
+        "fullchain_certificate" => $certificateKeys.'/fullchain.crt',
+        "order" => $certificateKeys.'/order'
+    );
 
     // Initiating the client instance. In this case using the staging server (argument 2) and outputting all status and debug information (argument 3).
     $client = new LEClient($configs['email'], LEClient::LE_PRODUCTION, LECLient::LOG_DEBUG);
 
-    $domains = [];
-
-    foreach($cert['hosts'] as $host) {
-        if (is_null($host)) {
-            $domains[] = $cert['domain'];
-        } else {
-            $domains[] = sprintf('%s.%s', $host, $cert['domain']);
-        }
-    }
-
-    if (empty($domains)) {
+    if (empty($hosts)) {
         continue;
     }
 
-    var_dump($domains);
-    //continue;
-
     // Initiating the order instance. The keys and certificate will be stored in /example.org/ (argument 1) and the domains in the array (argument 2) will be on the certificate.
-    $order = $client->getOrCreateOrder($domain['domain'], $domains);
+    $order = $client->getOrCreateOrder($domain['domain'], $hosts);
     // Check whether there are any authorizations pending. If that is the case, try to verify the pending authorizations.
 
     if (!$order->allAuthorizationsValid()) {

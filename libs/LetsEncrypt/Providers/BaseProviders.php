@@ -165,45 +165,65 @@ abstract class BaseProviders
         return $data;
     }
 
-    /**
-     * @return bool
-     * @throws \ErrorException
-     */
-    protected function verify(): bool
+    public function sleep_for(int $seconds): void
     {
         // @codeCoverageIgnoreStart
         if (!class_exists('\PHPUnit_Framework_TestCase', false)) {
-            $minWait = 70; //Always wait 70 seconds for first try
-
-            $round = floor($minWait / 10);
-            $initital = (int)($minWait - ($round * 10));
-            print "Waiting {$minWait} seconds for population... ";
+            $round = floor($seconds / 10);
+            $initital = (int)($seconds - ($round * 10));
+            print "Waiting {$seconds} seconds for population... ";
             sleep($initital);
             foreach (range(1, $round) as $sleep) {
                 sleep(10);
                 print (($sleep * 10) + $initital) . '... ';
             }
             print PHP_EOL;
-            sleep(1);
-        } else {
-            //print "Waiting {$this->intitalWait} seconds for population... ";
         }
         // @codeCoverageIgnoreEnd
+    }
+
+    /**
+     * @return bool
+     * @throws \ErrorException
+     */
+    protected function verify(): bool
+    {
+        $this->sleep_for(70);
+
+        while (!$this->hosts->isAllVerified()) {
+            $this->checkNameservers();
+
+            //Check again if all is verified and if not, re-sleep for 60 seconds for an additional check
+            if (!$this->hosts->isAllVerified()) {
+                if (!$this->pushHosts()) {
+                    throw new \ErrorException("Failed while attempting to verify hosts, repushing changes");
+                }
+
+                $this->sleep_for(60);
+            }
+        }
+        return $this->hosts->isAllVerified();
+    }
+
+    protected function checkNameservers()
+    {
         if (!$this->hosts->isAllVerified()) {
-            foreach($this->hosts as $entry) {
+            foreach ($this->hosts as $entry) {
                 //var_dump($entry->isVerified());
                 if (!$entry->isVerified()) {
                     $setVerified = true;
                     $verifiedCount = 0;
                     foreach ($this->getNameservers() as $nameserver) {
-                        $ret = $this->dig->dnsqr(strtolower($entry->getType()), sprintf('%s.%s.%s', $entry->getHostname(), $this->hosts->getSLD(), $this->hosts->getTLD()), 10, $nameserver);
+                        $ret = $this->dig->dnsqr(strtolower($entry->getType()),
+                            sprintf('%s.%s.%s', $entry->getHostname(), $this->hosts->getSLD(), $this->hosts->getTLD()),
+                            10, $nameserver);
 
                         if (!$ret || !is_array($ret)) {
                             $setVerified = false;
                             break;
                         }
 
-                        foreach($ret as $retval) {
+                        foreach ($ret as $retval) {
                             if (str_replace('"', '', $retval) == $entry->getAddress()) {
                                 $verifiedCount++;
                                 break;
@@ -226,7 +246,8 @@ abstract class BaseProviders
                         $verifiedCount = 0;
                         foreach (['1.1.1.1', '1.0.0.1'] as $nameserver) {
                             $ret = $this->dig->dnsqr(strtolower($entry->getType()),
-                                sprintf('%s.%s.%s', $entry->getHostname(), $this->hosts->getSLD(), $this->hosts->getTLD()), 10,
+                                sprintf('%s.%s.%s', $entry->getHostname(), $this->hosts->getSLD(),
+                                    $this->hosts->getTLD()), 10,
                                 $nameserver);
 
                             if (!$ret || !is_array($ret)) {
@@ -234,7 +255,7 @@ abstract class BaseProviders
                                 break;
                             }
 
-                            foreach($ret as $retval) {
+                            foreach ($ret as $retval) {
                                 if (str_replace('"', '', $retval) == $entry->getAddress()) {
                                     $verifiedCount++;
                                     break;
@@ -257,29 +278,6 @@ abstract class BaseProviders
                     $entry->setVerified($setVerified);
                 }
             }
-
-            //var_dump($this->hosts->isAllVerified());
-
-            // @codeCoverageIgnoreStart
-            if (!class_exists('\PHPUnit_Framework_TestCase', false)) {
-                //Check again if all is verified and if not, re-sleep for 60 seconds for an additional check
-                if (!$this->hosts->isAllVerified()) {
-                    if (!$this->pushHosts()) {
-                        throw new \ErrorException("Failed while attempting to verify hosts, repushing changes");
-                        //break;
-                        return false;
-                    }
-                    print "Sleeping ... ";
-                    sleep(10);
-                    foreach (range(1, 5) as $sleep) {
-                        sleep(10);
-                        print ($sleep * 10) . '... ';
-                    }
-                    print PHP_EOL;
-                }
-            }
-            // @codeCoverageIgnoreEnd
         }
-        return $this->hosts->isAllVerified();
     }
 }

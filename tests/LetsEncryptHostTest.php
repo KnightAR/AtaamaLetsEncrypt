@@ -45,28 +45,16 @@ class LetsEncryptHostTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @test
-     * @throws \LetsEncrypt\Host\exceptions\HostEntryException
      * @throws \Exception
      */
     public function HostVerificationEntires()
     {
-        $assoc = [
-            'getType' => '@',
-            'getHostname' => crc32(rand()),
-            'getAddress' => crc32(rand()),
-            'getTtl' => rand(600, 1800),
-            'getMXPref' => rand(10, 100),
-            'getEmailType' => crc32(rand()),
-            'isVerified' => false
-        ];
-
         $entires = new HostVerificationEntries('example.com');
         $this->assertInstanceOf('\LetsEncrypt\Host\HostVerificationEntries', $entires);
     }
 
     /**
      * @test
-     * @throws \LetsEncrypt\Host\exceptions\HostEntryException
      * @throws \Exception
      */
     public function RecordConverter()
@@ -115,8 +103,6 @@ class LetsEncryptHostTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @test
-     * @throws \LetsEncrypt\Host\exceptions\HostEntryException
-     * @throws \Exception
      */
     public function RecordConverterArray()
     {
