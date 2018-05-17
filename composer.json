@@ -30,6 +30,11 @@
             "type": "vcs",
             "no-api": true,
             "url": "git@github.com:KnightAR/godaddy-api-client.git"
+        },
+        {
+            "type": "vcs",
+            "no-api": true,
+            "url": "git@github.com:Awolacademy/LEClient.git"
         }
     ],
     "minimum-stability": "dev",

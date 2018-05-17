@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "dfad30bd6b03365a1d31db4eda449659",
+    "content-hash": "90097886a99296ef2317d07f6c72c50c",
     "packages": [
         {
             "name": "doctrine/inflector",
@@ -858,25 +858,24 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/yourivw/LEClient.git",
-                "reference": "a8c5fec84bb5caef872be38288cc51d4f8952481"
+                "url": "git@github.com:Awolacademy/LEClient.git",
+                "reference": "f73b6c30a1a8c27d9c096ff766ffd587e32b5f5a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/yourivw/LEClient/zipball/a8c5fec84bb5caef872be38288cc51d4f8952481",
-                "reference": "a8c5fec84bb5caef872be38288cc51d4f8952481",
+                "url": "https://api.github.com/repos/Awolacademy/LEClient/zipball/f73b6c30a1a8c27d9c096ff766ffd587e32b5f5a",
+                "reference": "f73b6c30a1a8c27d9c096ff766ffd587e32b5f5a",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.2"
             },
             "type": "library",
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
             "description": "PHP LetsEncrypt client library for ACME v2",
-            "time": "2018-04-04T17:33:28+00:00"
+            "time": "2018-05-17T21:24:08+00:00"
         }
     ],
     "packages-dev": [
