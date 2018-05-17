@@ -859,12 +859,12 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:Awolacademy/LEClient.git",
-                "reference": "f73b6c30a1a8c27d9c096ff766ffd587e32b5f5a"
+                "reference": "5dd5d768ca41aef3e1763703707c391b23a3fcf6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Awolacademy/LEClient/zipball/f73b6c30a1a8c27d9c096ff766ffd587e32b5f5a",
-                "reference": "f73b6c30a1a8c27d9c096ff766ffd587e32b5f5a",
+                "url": "https://api.github.com/repos/Awolacademy/LEClient/zipball/5dd5d768ca41aef3e1763703707c391b23a3fcf6",
+                "reference": "5dd5d768ca41aef3e1763703707c391b23a3fcf6",
                 "shasum": ""
             },
             "require": {
@@ -875,7 +875,7 @@
                 "MIT"
             ],
             "description": "PHP LetsEncrypt client library for ACME v2",
-            "time": "2018-05-17T21:24:08+00:00"
+            "time": "2018-05-17T21:43:18+00:00"
         }
     ],
     "packages-dev": [
