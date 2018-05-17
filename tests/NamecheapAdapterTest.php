@@ -3,7 +3,7 @@ namespace Test;
 
 use \LetsEncrypt\Providers\Namecheap\RecordConverter;
 
-class NamecheapAdapterTest extends \PHPUnit_Framework_TestCase
+class NamecheapAdapterTest extends \PHPUnit\Framework\TestCase
 {
     private $dnsclient;
     private $dns;

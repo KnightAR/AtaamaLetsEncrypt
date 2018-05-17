@@ -4,7 +4,7 @@ namespace Test;
 use LetsEncrypt\Providers\Godaddy\RecordConverter;
 use LetsEncrypt\Host\HostVerificationEntries;
 
-class GodaddyAdapterTest extends \PHPUnit_Framework_TestCase
+class GodaddyAdapterTest extends \PHPUnit\Framework\TestCase
 {
     private $VdomainsApi;
     private $dns;

@@ -12,7 +12,7 @@ use LetsEncrypt\Host\HostVerificationObject;
 use LetsEncrypt\Host\HostVerificationEntries;
 use LetsEncrypt\Providers\Namecheap\RecordConverter;
 
-class LetsEncryptHostTest extends \PHPUnit_Framework_TestCase
+class LetsEncryptHostTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @test

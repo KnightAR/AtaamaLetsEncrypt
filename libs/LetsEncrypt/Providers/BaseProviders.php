@@ -22,6 +22,7 @@ abstract class BaseProviders
     protected $TLD;
     protected $SLD;
     protected $sandbox;
+    protected $retry = true;
 
     /*
      * @var HostEntries $hosts
@@ -37,6 +38,10 @@ abstract class BaseProviders
      */
     public function __construct(string $domain, array $options = [], bool $sandbox = false)
     {
+        $options = array_merge([
+            'retry' => true
+        ], $options);
+
         foreach($options as $key => $option) {
             $method = 'set' . ucfirst($key);
             if (method_exists($this, $method)) {
@@ -112,6 +117,24 @@ abstract class BaseProviders
     }
 
     /**
+     * @return bool
+     */
+    public function getRetry(): bool
+    {
+        return $this->retry;
+    }
+
+    /**
+     * @param bool $retry
+     * @return BaseProviders
+     */
+    public function setRetry(bool $retry): BaseProviders
+    {
+        $this->retry = $retry;
+        return $this;
+    }
+
+    /**
      * @param string $domain
      * @return BaseProviders
      * @throws \Exception
@@ -168,7 +191,7 @@ abstract class BaseProviders
     public function sleep_for(int $seconds): void
     {
         // @codeCoverageIgnoreStart
-        if (!class_exists('\PHPUnit_Framework_TestCase', false)) {
+        if (!class_exists('\PHPUnit\Framework\TestCase', false)) {
             $round = floor($seconds / 10);
             $initital = (int)($seconds - ($round * 10));
             print "Waiting {$seconds} seconds for population... ";
@@ -186,7 +209,7 @@ abstract class BaseProviders
      * @return bool
      * @throws \ErrorException
      */
-    protected function verify(): bool
+    public function verify(): bool
     {
         $this->sleep_for(70);
 
@@ -194,7 +217,7 @@ abstract class BaseProviders
             $this->checkNameservers();
 
             //Check again if all is verified and if not, re-sleep for 60 seconds for an additional check
-            if (!$this->hosts->isAllVerified()) {
+            if ($this->getRetry() && !$this->hosts->isAllVerified()) {
                 if (!$this->pushHosts()) {
                     throw new \ErrorException("Failed while attempting to verify hosts, repushing changes");
                 }
