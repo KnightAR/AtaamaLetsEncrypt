@@ -4,7 +4,8 @@
         "yourivw/LEClient": "dev-master",
         "namecheap/namecheap": "dev-master",
         "gellu/godaddy-api-client": "master",
-        "gufy/cpanel-whm": "dev-master"
+        "gufy/cpanel-whm": "dev-master",
+        "guzzlehttp/guzzle": "~6"
     },
     "require-dev": {
         "phpunit/phpunit": "~7.1"

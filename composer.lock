@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "90097886a99296ef2317d07f6c72c50c",
+    "content-hash": "4ca0a72e6fc432f1448d32cab3701815",
     "packages": [
         {
             "name": "doctrine/inflector",
@@ -859,12 +859,12 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:Awolacademy/LEClient.git",
-                "reference": "5dd5d768ca41aef3e1763703707c391b23a3fcf6"
+                "reference": "5c5bda191dfbc0a80f585df1a8dc3c1401c0fc69"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Awolacademy/LEClient/zipball/5dd5d768ca41aef3e1763703707c391b23a3fcf6",
-                "reference": "5dd5d768ca41aef3e1763703707c391b23a3fcf6",
+                "url": "https://api.github.com/repos/Awolacademy/LEClient/zipball/5c5bda191dfbc0a80f585df1a8dc3c1401c0fc69",
+                "reference": "5c5bda191dfbc0a80f585df1a8dc3c1401c0fc69",
                 "shasum": ""
             },
             "require": {
@@ -875,7 +875,7 @@
                 "MIT"
             ],
             "description": "PHP LetsEncrypt client library for ACME v2",
-            "time": "2018-05-17T21:43:18+00:00"
+            "time": "2018-05-17T22:29:15+00:00"
         }
     ],
     "packages-dev": [
