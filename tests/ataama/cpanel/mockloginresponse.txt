@@ -1,0 +1,10 @@
+<script type="text/javascript">
+    var DEFAULT_BOX_ORDER = ["files","databases","domains","email","metrics","security","software","advanced","preferences"];
+
+    PAGE.isRTL = document.getElementsByTagName("HTML")[0].getAttribute("dir") === "rtl";
+    PAGE.currentTheme = "paper_lantern";
+    PAGE.securityToken = "\/cpsess9801228129";
+    PAGE.userName = "awolacademy";
+    PAGE.domain = "awolacademy.com";
+
+</script>

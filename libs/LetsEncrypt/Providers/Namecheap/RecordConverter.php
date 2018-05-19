@@ -10,8 +10,9 @@ namespace LetsEncrypt\Providers\Namecheap;
 
 use LetsEncrypt\Providers\BaseRecordConverter;
 use LetsEncrypt\Host\HostVerificationObject;
+use LetsEncrypt\Providers\RecordConverterInterface;
 
-class RecordConverter extends BaseRecordConverter
+class RecordConverter extends BaseRecordConverter implements RecordConverterInterface
 {
     private $attributeMap = [
         'Type' => 'type',
@@ -47,10 +48,11 @@ class RecordConverter extends BaseRecordConverter
     }
 
     /**
+     * Convert to HostVerificationObject
      * @return HostVerificationObject
      * @throws \LetsEncrypt\Host\exceptions\HostEntryException
      */
-    public function convert()
+    public function convert(): HostVerificationObject
     {
         $record = $this->container;
         $host = new HostVerificationObject($record['Type'], $record['Name'], $record['Address'], $record['TTL'], (int) $record['MXPref'], $record['EmailType']);
@@ -59,6 +61,7 @@ class RecordConverter extends BaseRecordConverter
     }
 
     /**
+     * Convert to Providers Object
      * @return HostVerificationObject
      * @throws \LetsEncrypt\Host\exceptions\HostEntryException
      */
@@ -68,27 +71,27 @@ class RecordConverter extends BaseRecordConverter
     }
 
     /**
-     * Gets name
+     * Gets hostname
      * @return string
      */
-    public function getHostname()
+    public function getHostname(): string
     {
         return $this->container['Name'];
     }
 
     /**
-     * Sets name
+     * Sets hostname
      * @param string $name
      * @return $this
      */
-    public function setHostname($name)
+    public function setHostname(string $name): BaseRecordConverter
     {
         $this->container['Name'] = $name;
-
         return $this;
     }
 
     /**
+     * Get Type
      * @return string
      */
     public function getType(): string
@@ -97,14 +100,18 @@ class RecordConverter extends BaseRecordConverter
     }
 
     /**
+     * Set Type
      * @param string $type
+     * @return $this
      */
-    public function setType(string $type): void
+    public function setType(string $type): BaseRecordConverter
     {
         $this->container['Type'] = $type;
+        return $this;
     }
 
     /**
+     * Get Address
      * @return string
      */
     public function getAddress(): string
@@ -113,14 +120,18 @@ class RecordConverter extends BaseRecordConverter
     }
 
     /**
+     * Set Address
      * @param string $address
+     * @return $this
      */
-    public function setAddress(string $address): void
+    public function setAddress(string $address): BaseRecordConverter
     {
         $this->container['Address'] = $address;
+        return $this;
     }
 
     /**
+     * Get TTL
      * @return string
      */
     public function getTtl(): string
@@ -129,11 +140,14 @@ class RecordConverter extends BaseRecordConverter
     }
 
     /**
+     * Set TTL
      * @param string $ttl
+     * @return $this
      */
-    public function setTtl(string $ttl): void
+    public function setTtl(string $ttl): BaseRecordConverter
     {
         $this->container['TTL'] = $ttl;
+        return $this;
     }
 
     /**
@@ -145,10 +159,33 @@ class RecordConverter extends BaseRecordConverter
     }
 
     /**
+     * Get MX Pref
+     * @param int $mxpref
+     * @return $this
+     */
+    public function setMXPref(int $mxpref): BaseRecordConverter
+    {
+        $this->container['MXPref'] = $mxpref;
+        return $this;
+    }
+
+    /**
+     * Get Email Type
      * @return string
      */
     public function getEmailType(): string
     {
         return $this->container['EmailType'];
+    }
+
+    /**
+     * Set Email Type
+     * @param string $emailtype
+     * @return $this
+     */
+    public function setEmailType(string $emailtype): BaseRecordConverter
+    {
+        $this->container['EmailType'] = $emailtype;
+        return $this;
     }
 }

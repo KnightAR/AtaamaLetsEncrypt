@@ -11,8 +11,9 @@ namespace LetsEncrypt\Providers\Namecheap;
 use LetsEncrypt\Providers\BaseProviders;
 use LetsEncrypt\Host\exceptions\HostEntryException;
 use LetsEncrypt\Host\NamecheapHostSetRequest;
+use LetsEncrypt\Providers\ProviderInterface;
 
-class NamecheapAdapter extends BaseProviders
+class NamecheapAdapter extends BaseProviders implements ProviderInterface
 {
     /*
      * @var \Namecheap\Api\Domains\Dns $dnsclient
@@ -70,6 +71,7 @@ class NamecheapAdapter extends BaseProviders
     }
 
     /**
+     * Get Old Records
      * @throws \ErrorException|\Exception
      */
     public function getOldRecords(): void
@@ -99,6 +101,7 @@ class NamecheapAdapter extends BaseProviders
     }
 
     /**
+     * Add new records
      * @param array $records
      * @throws HostEntryException
      */
@@ -116,6 +119,10 @@ class NamecheapAdapter extends BaseProviders
         }
     }
 
+    /**
+     * Push Hosts, add new records
+     * @return bool
+     */
     public function pushHosts(): bool
     {
         $HostSetRequest = new NamecheapHostSetRequest($this->hosts);
@@ -130,6 +137,7 @@ class NamecheapAdapter extends BaseProviders
     }
 
     /**
+     * Add or Replace Records
      * @param array $records
      * @return bool
      * @throws HostEntryException

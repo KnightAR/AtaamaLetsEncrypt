@@ -1,0 +1,40 @@
+{
+    "cpanelresult": {
+        "data": [
+            {
+                "record": "path=/",
+                "unencoded": 1,
+                "char_str_list": [
+                    "path=/"
+                ],
+                "txtdata": "path=/",
+                "ttl": "14400",
+                "type": "TXT",
+                "name": "_carddavs._tcp.archive.awolacademy.com.",
+                "Line": 288,
+                "line": 288,
+                "class": "IN"
+            },
+            {
+                "class": "IN",
+                "line": 496,
+                "Line": 496,
+                "name": "_acme-challenge.app.awolacademy.com.",
+                "type": "TXT",
+                "ttl": "60",
+                "char_str_list": [
+                    "8dfPy6-T02oLm0R6524q8tjC-RJM6X4wDy3nDWDJ-Gg"
+                ],
+                "record": "8dfPy6-T02oLm0R6524q8tjC-RJM6X4wDy3nDWDJ-Gg",
+                "unencoded": 1,
+                "txtdata": "8dfPy6-T02oLm0R6524q8tjC-RJM6X4wDy3nDWDJ-Gg"
+            }
+        ],
+        "apiversion": 2,
+        "func": "fetchzone_records",
+        "event": {
+            "result": 1
+        },
+        "module": "ZoneEdit"
+    }
+}

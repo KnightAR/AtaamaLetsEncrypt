@@ -9,9 +9,9 @@
 namespace LetsEncrypt\Providers\Godaddy;
 
 use LetsEncrypt\Providers\BaseProviders;
-use LetsEncrypt\Host\HostVerificationObject;
+use LetsEncrypt\Providers\ProviderInterface;
 
-class GodaddyAdapter extends BaseProviders
+class GodaddyAdapter extends BaseProviders implements ProviderInterface
 {
     protected $defaultTTL = 600;
     /*
@@ -65,8 +65,7 @@ class GodaddyAdapter extends BaseProviders
     }
 
     /**
-     * @throws \GoDaddyDomainsClient\ApiException
-     * @throws \LetsEncrypt\Host\exceptions\HostEntryException
+     * Get Old Records
      */
     public function getOldRecords(): void
     {
@@ -84,6 +83,7 @@ class GodaddyAdapter extends BaseProviders
     }
 
     /**
+     * * Add new records
      * @param array $records
      */
     public function addRecords(array $records): void
@@ -101,7 +101,6 @@ class GodaddyAdapter extends BaseProviders
 
     /**
      * @return bool
-     * @throws \GoDaddyDomainsClient\ApiException
      */
     public function pushHosts(): bool
     {
@@ -118,11 +117,10 @@ class GodaddyAdapter extends BaseProviders
     }
 
     /**
+     * Add or Replace Records
      * @param array $records
      * @return bool
      * @throws \ErrorException
-     * @throws \GoDaddyDomainsClient\ApiException
-     * @throws \LetsEncrypt\Host\exceptions\HostEntryException
      */
     public function addOrReplaceRecords(array $records = []): bool
     {

@@ -60,6 +60,27 @@ abstract class BaseProviders
         $this->hosts = new HostVerificationEntries($this->getDomain());
     }
 
+    /**
+     * Add new records
+     * @param array $records
+     */
+    abstract public function addRecords(array $records): void;
+
+    /**
+     * Get Old Records
+     */
+    abstract public function getOldRecords(): void;
+
+    /**
+     * @return bool
+     */
+    abstract public function pushHosts(): bool;
+
+    /**
+     * Add or Replace Records
+     * @param array $records
+     * @return bool
+     */
     abstract public function addOrReplaceRecords(): bool;
 
     /**
@@ -69,10 +90,6 @@ abstract class BaseProviders
     {
         return $this->hosts;
     }
-
-    abstract public function addRecords(array $records): void;
-    abstract public function getOldRecords(): void;
-    abstract public function pushHosts(): bool;
 
     /**
      * @return int

@@ -15,12 +15,9 @@ use GuzzleHttp\Client;
  *
  * Provides easy to use class for calling some CPanel/WHM API functions.
  *
- * Based on
- * @author Mochamad Gufron <mgufronefendi@gmail.com>
+ * Based on mgufrone/cpanel-php by Mochamad Gufron <mgufronefendi@gmail.com>
  *
  * @version v1.0.0
- *
- * @link https://github.com/mgufrone/cpanel-php
  * @since v1.0.0
  */
 class Cpanel implements CpanelInterface
@@ -96,6 +93,20 @@ class Cpanel implements CpanelInterface
     protected $cookiepath = './cpanelconn.cookies';
 
     /**
+     * @var \GuzzleHttp\Client The HTTP Client
+     *
+     * @since v1.0.0
+     */
+    protected $client;
+
+    /**
+     * @var string Classname
+     *
+     * @since v1.0.0
+     */
+    protected $classname;
+
+    /**
      * Class constructor. The options must be contain username, host, and password.
      *
      * @param array $options options that will be passed and processed
@@ -105,15 +116,21 @@ class Cpanel implements CpanelInterface
      */
     public function __construct($options = array())
     {
+        $this->classname = substr(strrchr(get_class($this), '\\'), 1);
         if (!empty($options)) {
             if (!empty($options['auth_type'])) {
                 $this->setAuthType($options['auth_type']);
             }
 
-            return $this->checkOptions($options)
+            $this->checkOptions($options)
                 ->setHost($options['host'])
                 ->setAuthorization($options['username'], $options['password']);
+
+            if (!empty($options['apiclient'])) {
+                $this->setClient($options['apiclient']);
+            }
         }
+        return $this;
     }
 
     /**
@@ -157,6 +174,38 @@ class Cpanel implements CpanelInterface
             throw new \Exception('CPanel Host is not set', 2303);
         }
 
+        return $this;
+    }
+
+    /**
+     * get API HTTP Client.
+     *
+     * @return object return the HTTP client
+     *
+     * @since v1.0.0
+     */
+    public function getClient()
+    {
+        if (!empty($this->client)) {
+            return $this->client;
+        }
+        $host = $this->getHost();
+        $this->client = new Client(['base_uri' => $host]);
+        return $this->client;
+    }
+
+    /**
+     * set API HTTP Client.
+     *
+     * @param Client $client The HTTP client
+     *
+     * @return object return as self-object
+     *
+     * @since v1.0.0
+     */
+    public function setClient($client = null)
+    {
+        $this->client = $client;
         return $this;
     }
 
@@ -385,7 +434,7 @@ class Cpanel implements CpanelInterface
     }
 
     /**
-     * @return bool|mixed
+     * @return string
      * @throws ConnectionException
      * @throws \ErrorException
      */
@@ -393,7 +442,7 @@ class Cpanel implements CpanelInterface
     {
         $cookieJar = $this->getCookieJar();
         if (!empty($this->session)) {
-            return true;
+            return $this->session;
         }
 
         $arguments = [
@@ -402,10 +451,8 @@ class Cpanel implements CpanelInterface
             'goto_uri' => '/'
         ];
 
-        $host = $this->getHost();
-        $client = new Client(['base_uri' => $host]);
         try{
-            $request = $client->request('POST', $host . '/login/', [
+            $request = $this->getClient()->request('POST', $this->getHost() . '/login/', [
                 'connection' => 'close',
                 'verify' => false,
                 'query' => $arguments,
@@ -427,12 +474,14 @@ class Cpanel implements CpanelInterface
             // Find the cPanel session token in the page content
             if (
                 preg_match('|<META HTTP-EQUIV="refresh"[^>]+URL=/(cpsess\d+)/|i', $page, $token) ||
-                preg_match('|PAGE\.securityToken \= "\\/(cpsess\d+)";|i', $page, $token)
+                preg_match('|PAGE\.securityToken\s+\=\s+\"\\\/(cpsess\d+)\"\;|i', $page, $token)
             ) {
                 $this->session = $token[1];
                 file_put_contents($this->getCPSessionFile(), $this->session);
+                return $this->session;
             }
 
+            print $page;
             throw new ConnectionException("Token Fetch Error");
         }
         catch(\GuzzleHttp\Exception\ClientException $e)
@@ -453,7 +502,7 @@ class Cpanel implements CpanelInterface
      * @return \GuzzleHttp\Cookie\FileCookieJar
      * @throws \ErrorException
      */
-    protected function getCookieJar()
+    public function &getCookieJar()
     {
         if (!is_writable(dirname($this->getCPSessionFile()))) {
             throw new \ErrorException("Can't write to Session Cookie File: " . $this->getCPSessionFile());
@@ -476,6 +525,16 @@ class Cpanel implements CpanelInterface
     }
 
     /**
+     * @param \GuzzleHttp\Cookie\CookieJar $jar
+     * @return $this
+     */
+    public function setCookieJar(\GuzzleHttp\Cookie\CookieJar $jar)
+    {
+        $this->jar = $jar;
+        return $this;
+    }
+
+    /**
      * The executor. It will run API function and get the data.
      *
      * @param string $action function name that will be called.
@@ -489,14 +548,13 @@ class Cpanel implements CpanelInterface
      */
     protected function runQuery($action, $arguments)
     {
-        $this->setSessionToken();
+        if ($this->getAuthType() === 'session') {
+            $this->setSessionToken();
+        }
 
-        $host = $this->getHost();
-        $client = new Client(['base_uri' => $host]);
         try{
-            $response = $client->post($this->getSessionPath() . '/json-api/' . $action, [
+            $response = $this->getClient()->request('POST', $this->getHost() . '/' . $this->getSessionPath() . 'json-api/' . $action, [
                 'headers' => $this->createHeader(),
-                // 'body'    => $arguments[0],
                 'verify' => false,
                 'query' => $arguments,
                 'timeout' => $this->getTimeout(),
@@ -519,8 +577,9 @@ class Cpanel implements CpanelInterface
      * @param $function
      * @param $username
      * @param array $params
-     * @return mixed
-     * @throws \Exception
+     * @return null|array
+     * @throws ConnectionException
+     * @throws \ErrorException
      */
     public function cpanel($module, $function, $username, $params = array())
     {
@@ -533,7 +592,23 @@ class Cpanel implements CpanelInterface
         ]);
 
         $response = $this->runQuery($action, $params);
-        return $response;
+        if (!empty($response)) {
+            $response = json_decode($response, true);
+            if (!array_key_exists('cpanelresult', $response)) {
+                throw new \ErrorException("Incorrect CPanel Response");
+            }
+
+            if ($response['cpanelresult']['event']['result'] === 0) {
+                throw new \ErrorException("CPanel Error: " . $response->cpanelresult->event->reason);
+            }
+
+            if ($response['cpanelresult']['apiversion'] !== 2 || $response['cpanelresult']['func'] !== $function || $response['cpanelresult']['module'] !== $module) {
+                throw new \ErrorException("Incorrect CPanel Response");
+            }
+
+            return $response['cpanelresult']['data'];
+        }
+        return null;
     }
 
     /**
