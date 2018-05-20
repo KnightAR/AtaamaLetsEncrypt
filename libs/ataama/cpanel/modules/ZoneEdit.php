@@ -20,6 +20,7 @@ namespace ataama\cpanel\modules;
  * @method array fetchzone_records($username, $params)
  * @method array add_zone_record($username, $params)
  * @method array edit_zone_record($username, $params)
+ * @method array remove_zone_record($username, $params)
  */
 class ZoneEdit extends \ataama\cpanel\Cpanel
 {

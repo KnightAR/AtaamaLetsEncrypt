@@ -513,6 +513,10 @@ class Cpanel implements CpanelInterface
         if ($this->jar) {
             return $this->jar;
         }
+        if (file_exists($this->getCPSessionFile()) && (time() - filemtime($this->getCPSessionFile())) >= 1800) {
+            unlink($this->getCPSessionFile());
+            @unlink($this->cookiepath);
+        }
         $jar = new \GuzzleHttp\Cookie\FileCookieJar($this->cookiepath, true);
         if (!$jar->getCookieByName('cpsession') && file_exists($this->getCPSessionFile()))
         {

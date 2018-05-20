@@ -14,8 +14,6 @@ use LetsEncrypt\Providers\ProviderInterface;
 
 class CPanelAdapter extends BaseProviders implements ProviderInterface
 {
-
-    protected $defaultTTL = 600;
     /*
      * @var \ataama\cpanel\modules\ZoneEdit $dnsclient
      */
@@ -24,6 +22,7 @@ class CPanelAdapter extends BaseProviders implements ProviderInterface
     private $username;
     private $password;
     private $host;
+    protected $repushAble = false;
 
     /**
      * NamecheapAdapter constructor.
@@ -43,7 +42,7 @@ class CPanelAdapter extends BaseProviders implements ProviderInterface
         ], $options);
 
         $client = new ZoneEdit([
-            'username' => $options['hostname'],
+            'username' => $options['username'],
             'password' => $options['password'],
             'host' => $options['host'],
             'auth_type' => $options['auth_type']
@@ -64,7 +63,20 @@ class CPanelAdapter extends BaseProviders implements ProviderInterface
      */
     public function addRecords(array $records): void
     {
-        // TODO: Implement addRecords() method.
+        foreach ($records as $record) {;
+            $record = new RecordConverter($record);
+
+            if (!preg_match('#^_acme-challenge\.#', $record->getHostname())) {
+                continue;
+            }
+
+            if (preg_match('#\.'. str_replace('.', '\.', sprintf('%s.%s', $this->getSLD(), $this->getTLD())) . '$#', $record->getHostname())) {
+                $new = str_replace(sprintf('.%s.%s', $this->getSLD(), $this->getTLD()), '', $record->getHostname());
+                $record->setHostname($new);
+            }
+
+            $this->hosts->addEntry($record);
+        }
     }
 
     /**
@@ -73,31 +85,82 @@ class CPanelAdapter extends BaseProviders implements ProviderInterface
      */
     public function getOldRecords(): void
     {
-        $oldrecords = $this->dnsclient->fetchzone_records($this->getUsername(), [
+        $old_hosts = $this->dnsclient->fetchzone_records($this->getUsername(), [
             'domain' => $this->getDomain(),
             'customonly' => 1,
             'type' => 'TXT'
         ]);
 
-        // TODO: Implement getOldRecords() method.
+        if (!empty($old_hosts)) {
+            foreach ($old_hosts as $record) {
+                $host = new RecordConverter($record);
+                $host->setVerified(true);
+                if (preg_match('#^_acme-challenge\.#', $record['name'])) {
+                    $host->setDeleted(true);
+                } else {
+                    //We don't care about any other records!
+                    continue;
+                }
+
+                if (preg_match('#\.'. str_replace('.', '\.', sprintf('%s.%s', $this->getSLD(), $this->getTLD())) . '$#', $host->getHostname())) {
+                    $new = str_replace(sprintf('.%s.%s', $this->getSLD(), $this->getTLD()), '', $host->getHostname());
+                    $host->setHostname($new);
+                }
+
+                $this->hosts->addEntry($host);
+            }
+        }
     }
 
     /**
      * @return bool
+     * @throws \Exception
      */
     public function pushHosts(): bool
     {
-        // TODO: Implement pushHosts() method.
+        foreach($this->hosts as $key => $host) {
+            $record = array_merge(
+                $host->convertProvider(),
+                ['domain' => sprintf("%s.%s", $this->hosts->getSLD(), $this->hosts->getTLD())]
+            );
+            if ($host->isDeleted()) {
+                $ret = $this->dnsclient->remove_zone_record($this->getUsername(), $record);
+                if (isset($ret[0]['result']['status']) && $ret[0]['result']['status'] !== 1) {
+                    print_r($ret);
+                    throw new \ErrorException("Could not remove zone record, server returned an error.");
+                }
+            } elseif (!$host->isVerified()) {
+                $ret = $this->dnsclient->add_zone_record($this->getUsername(), $record);
+                if (isset($ret[0]['result']['status']) && $ret[0]['result']['status'] !== 1) {
+                    print_r($ret);
+                    throw new \ErrorException("Could not add new zone record, server returned an error.");
+                }
+            } else {
+                //$ret = $this->dnsclient->edit_zone_record($this->getUsername(), $record);
+                continue;
+            }
+        }
+        return true;
     }
 
     /**
      * Add or Replace Records
      * @param array $records
      * @return bool
+     * @throws \ErrorException
+     * @throws \Exception
      */
     public function addOrReplaceRecords(array $records = []): bool
     {
-        // TODO: Implement addOrReplaceRecords() method.
+        $this->getOldRecords();
+        $this->addRecords($records);
+
+        if ($this->pushHosts()) {
+            $ret = $this->verify();
+            return $ret;
+        }
+
+        return false;
     }
 
     /**

@@ -55,7 +55,6 @@ class ZoneEditTest extends \PHPUnit\Framework\TestCase
         $this->getMockClient()->expects($this->any())
             ->method('request')
             ->will($this->returnCallback(function($METHOD, $uri) {
-                print_r([$METHOD, $uri]);
                 $ret = null;
                 if (preg_match('#\/login\/#i', $uri)) {
                     $ret = file_get_contents(dirname(__FILE__) . '/../mockloginresponse.txt');
@@ -79,7 +78,6 @@ class ZoneEditTest extends \PHPUnit\Framework\TestCase
             'customonly' => 1,
             'type' => 'TXT'
         ]);
-        print_r($ret);
 
         $this->assertNotEmpty($ret);
     }

@@ -23,6 +23,7 @@ abstract class BaseProviders
     protected $SLD;
     protected $sandbox;
     protected $retry = true;
+    protected $repushAble = true;
 
     /*
      * @var HostEntries $hosts
@@ -183,12 +184,18 @@ abstract class BaseProviders
             $ret = $this->dig->dnsqns($this->getDomain(), 10, '1.1.1.1');
             $this->nameservers = [];
             foreach ($ret as $d) {
-                $d = explode('.', $d);
-                array_pop($d);
-                $this->nameservers[] = implode('.', $d);
+                $d = rtrim($d, '.');
+                //This is a hack for CPanel hosted domains, to be able to query them directly
+                if (get_class($this) === 'LetsEncrypt\Providers\CPanel\CPanelAdapter' && empty($this->dig->dnsqr('a', $d,10,'1.1.1.1'))) {
+                    //Since the nameservers are coming up without an A record, we assume the same server is the nameserver.
+                    $rip = $this->dig->dnsqr('a', $this->getDomain(),10,'1.1.1.1');
+                    $this->nameservers[] = array_pop($rip);
+                    continue;
+                }
+                $this->nameservers[] = $d;
             }
         }
-        return $this->nameservers;
+        return array_unique($this->nameservers);
     }
 
     /**
@@ -235,7 +242,7 @@ abstract class BaseProviders
 
             //Check again if all is verified and if not, re-sleep for 60 seconds for an additional check
             if ($this->getRetry() && !$this->hosts->isAllVerified()) {
-                if (!$this->pushHosts()) {
+                if ($this->repushAble && !$this->pushHosts()) {
                     throw new \ErrorException("Failed while attempting to verify hosts, repushing changes");
                 }
 

@@ -143,7 +143,6 @@ class CpanelTest extends \PHPUnit\Framework\TestCase
             'customonly' => 1,
             'type' => 'TXT'
         ]);
-        print_r($ret);
 
         $this->assertNotEmpty($ret);
     }

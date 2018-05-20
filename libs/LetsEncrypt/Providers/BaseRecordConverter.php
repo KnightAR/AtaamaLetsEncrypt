@@ -81,4 +81,20 @@ abstract class BaseRecordConverter implements ArrayAccess
     {
         $this->container['verified'] = $verified;
     }
+
+    /**
+     * @return bool
+     */
+    public function isDeleted(): bool
+    {
+        return (bool) $this->container['deleted'];
+    }
+
+    /**
+     * @param bool $deleted
+     */
+    public function setDeleted(bool $deleted = false): void
+    {
+        $this->container['deleted'] = $deleted;
+    }
 }

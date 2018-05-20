@@ -2,6 +2,13 @@
 
 namespace LetsEncrypt\Host;
 
+/**
+ * Class HostEntryObject
+ * @package LetsEncrypt\Host
+ *
+ * @method setLine($line)
+ * @method int getLine()
+ */
 class HostEntryObject implements HostEntryInterface
 {
     protected $type;
@@ -44,6 +51,31 @@ class HostEntryObject implements HostEntryInterface
         $this->MXPref = $MXPref;
 
         $this->emailType = $emailType;
+    }
+
+    protected $container = [];
+
+    /**
+     * @param $function
+     * @param $arguments
+     * @return mixed|null
+     */
+    public function __call($function, $arguments)
+    {
+        if (preg_match('#^get([A-Z][a-z0-9_]{1,})#', $function, $_match)) {
+            $key = ucfirst(strtolower($_match[0]));
+            if (isset($this->container[$key])) {
+                return $this->container[$key];
+            }
+            return null;
+        } elseif (preg_match('#^set([A-Z][a-z0-9_]{1,})#', $function)) {
+            $key = ucfirst(strtolower($_match[0]));
+            $val = (count($arguments)>0) ? array_pop($arguments) : null;
+            if (isset($this->container[$key])) {
+                $this->container[$key] = $val;
+            }
+            return null;
+        }
     }
 
     public function getType()

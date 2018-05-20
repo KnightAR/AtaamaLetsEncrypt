@@ -101,6 +101,7 @@ class GodaddyAdapter extends BaseProviders implements ProviderInterface
 
     /**
      * @return bool
+     * @throws \GoDaddyDomainsClient\ApiException
      */
     public function pushHosts(): bool
     {
@@ -121,6 +122,7 @@ class GodaddyAdapter extends BaseProviders implements ProviderInterface
      * @param array $records
      * @return bool
      * @throws \ErrorException
+     * @throws \GoDaddyDomainsClient\ApiException
      */
     public function addOrReplaceRecords(array $records = []): bool
     {

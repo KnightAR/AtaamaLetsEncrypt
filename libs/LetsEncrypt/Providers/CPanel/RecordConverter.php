@@ -6,7 +6,7 @@
  * Time: 12:37 PM
  */
 
-namespace LetsEncrypt\Providers\Namecheap;
+namespace LetsEncrypt\Providers\CPanel;
 
 use LetsEncrypt\Providers\BaseRecordConverter;
 use LetsEncrypt\Host\HostVerificationObject;
@@ -17,14 +17,13 @@ class RecordConverter extends BaseRecordConverter implements RecordConverterInte
     private $attributeMap = [
         'Type' => 'type',
         'Name' => 'name',
-        'Address' => 'data',
-        'MXPref' => 'priority',
+        'MXPref' => 'weight',
         'TTL' => 'ttl',
-        'Service' => 'service',
+        'Service' => 'target',
         'Protocol' => 'protocol',
         'Port' => 'port',
-        'Priority' => 'weight',
-        'EmailType' => 'emailtype'
+        'Priority' => 'priority',
+        'Line' => 'line'
     ];
 
     /**
@@ -37,14 +36,35 @@ class RecordConverter extends BaseRecordConverter implements RecordConverterInte
             $this->container[$key] = null;
             if (isset($data[$key])) {
                 $this->container[$key] = $data[$key];
+                unset($data[$key]);
             } elseif (isset($data[$find])) {
                 $this->container[$key] = $data[$find];
+                unset($data[$find]);
             }
         }
-        if (!isset($this->container['EmailType']) || is_null($this->container['EmailType'])) {
-            $this->container['EmailType'] = 'FWD';
+
+        if (isset($data['record'])) {
+            $this->container['Address'] = $data['record'];
+            unset($data['record']);
+        } else if (isset($data['data'])) {
+            $this->container['Address'] = $data['data'];
+            unset($data['data']);
         }
+
+        if (!empty($data)) {
+            foreach ($data as $key => $val) {
+                $this->container[$key] = $val;
+            }
+        }
+
+        if (preg_match('#\.$#', $this->container['Name'])) {
+            $this->container['Name'] = rtrim($this->container['Name'], '.');
+        }
+
         $this->container['verified'] = isset($data['verified']) ? (bool) $data['verified'] : false;
+        $this->container['deleted'] = isset($data['deleted']) ? (bool) $data['deleted'] : false;
+        if (isset($data['verified'])) { unset($data['verified']); }
+        if (isset($data['deleted'])) { unset($data['deleted']); }
     }
 
     /**
@@ -57,17 +77,53 @@ class RecordConverter extends BaseRecordConverter implements RecordConverterInte
         $record = $this->container;
         $host = new HostVerificationObject($record['Type'], $record['Name'], $record['Address'], $record['TTL'], (int) $record['MXPref'], $record['EmailType']);
         $host->setVerified($record['verified']);
+        $host->setLine($record['Line']);
         return $host;
     }
 
     /**
      * Convert to Providers Object
-     * @return HostVerificationObject
-     * @throws \LetsEncrypt\Host\exceptions\HostEntryException
+     * @return array
+     * @throws \ErrorException
      */
     public function convertProvider()
     {
-        return $this->convert();
+        $record = $this->container;
+        $ret = [
+            'name' => $record['Name'],
+            'type' => $record['Type'],
+            'ttl' => $record['TTL'],
+            'class' => 'IN'
+        ];
+        /*if (!preg_match('#\.$#', $ret['name'])) {
+            $ret['name'] .= '.';
+        }*/
+        if ($record['verified']) {
+            $ret['line'] = $record['Line'];
+        }
+        switch ($record['Type']) {
+            case 'TXT':
+                $ret['txtdata'] = $record['Address'];
+                break;
+            case 'CNAME':
+                $ret['cname'] = $record['Address'];
+                break;
+            case 'A':
+            case 'AAAA':
+                $ret['address'] = $record['Address'];
+                break;
+            case 'SRV':
+                $ret['priority'] = $record['Priority'];
+                $ret['target'] = $record['Address'];
+                $ret['weight'] = $record['Weight'];
+                $ret['port'] = $record['Port'];
+                break;
+            case 'MX':
+            default:
+                throw new \ErrorException(sprintf("Record Type %s is not supported in this call", $record['Type']));
+                break;
+        }
+        return $ret;
     }
 
     /**
@@ -76,7 +132,7 @@ class RecordConverter extends BaseRecordConverter implements RecordConverterInte
      */
     public function getHostname(): string
     {
-        return $this->container['Name'];
+        return rtrim($this->container['Name'], '.');
     }
 
     /**
@@ -86,7 +142,7 @@ class RecordConverter extends BaseRecordConverter implements RecordConverterInte
      */
     public function setHostname(string $name): BaseRecordConverter
     {
-        $this->container['Name'] = $name;
+        $this->container['Name'] = rtrim($name, '.');
         return $this;
     }
 

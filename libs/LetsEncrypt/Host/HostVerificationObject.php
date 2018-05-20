@@ -5,6 +5,7 @@ namespace LetsEncrypt\Host;
 class HostVerificationObject extends HostEntryObject
 {
     protected $verified = false;
+    protected $deleted = false;
 
     /**
      * @return bool
@@ -17,8 +18,24 @@ class HostVerificationObject extends HostEntryObject
     /**
      * @param bool $verified
      */
-    public function setVerified($verified = false): void
+    public function setVerified(bool $verified = false): void
     {
         $this->verified = $verified;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDeleted(): bool
+    {
+        return $this->deleted;
+    }
+
+    /**
+     * @param bool $deleted
+     */
+    public function setDeleted(bool $deleted = false): void
+    {
+        $this->deleted = $deleted;
     }
 }
