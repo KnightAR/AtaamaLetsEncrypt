@@ -126,6 +126,7 @@ class CPanelAdapter extends BaseProviders implements ProviderInterface
             if ($host->isDeleted()) {
                 $ret = $this->dnsclient->remove_zone_record($this->getUsername(), $record);
                 if (isset($ret[0]['result']['status']) && $ret[0]['result']['status'] !== 1) {
+                    print_r($record);
                     print_r($ret);
                     throw new \ErrorException("Could not remove zone record, server returned an error.");
                 }
