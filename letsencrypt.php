@@ -54,9 +54,9 @@ function getCertKeysByDomain(string $domain, $acmeURL): array
 
     $certificateKeys = array(
         "public_key" => $certificateKeys . 'public.pem',
-        "private_key" => $certificateKeys . 'private.pem',
-        "certificate" => $certificateKeys . 'certificate.crt',
-        "fullchain_certificate" => $certificateKeys . 'fullchain.crt',
+        "private_key" => $certificateKeys . 'privkey.pem',
+        "certificate" => $certificateKeys . 'cert.pem',
+        "fullchain_certificate" => $certificateKeys . 'fullchain.pem',
         "chain" => $certificateKeys . 'chain.pem',
         "order" => $certificateKeys . 'order'
     );
