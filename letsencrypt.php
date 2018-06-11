@@ -4,7 +4,71 @@ require 'vendor/autoload.php';
 require_once('./config.inc.php');
 require_once('vendor/yourivw/leclient/LEClient/LEClient.php');
 
-$acmeURL = LEClient::LE_PRODUCTION;
+$acmeURL = LEClient::LE_STAGING;
+
+function getOrCreateKeysFolder($acmeURL): string
+{
+    $keysDir = dirname(__FILE__) . ($acmeURL === LEClient::LE_PRODUCTION ? '/keys/' : '/staging_keys/');
+    if (!is_dir($keysDir)) {
+        @mkdir($keysDir, 0777, true);
+        LEFunctions::createhtaccess($keysDir);
+    }
+    return $keysDir;
+}
+
+/**
+ * @param $acmeURL
+ * @return array
+ * @throws ErrorException
+ */
+function getAccountKeysByDomain($acmeURL): array
+{
+    $keysDir = getOrCreateKeysFolder($acmeURL);
+
+    $accountDir = $keysDir . '/__account/';
+    if (!is_dir($accountDir)) {
+        @mkdir($accountDir, 0777, true);
+        LEFunctions::createhtaccess($accountDir);
+    }
+    if (!is_writable($keysDir)) {
+        throw new ErrorException("{$keysDir} is not writable");
+    }
+
+    $accountKeys = [
+        'private_key' => $accountDir . 'private.pem',
+        'public_key' => $accountDir . 'public.pem',
+    ];
+
+    return $accountKeys;
+}
+
+function getCertKeysByDomain(string $domain, $acmeURL): array
+{
+    $keysDir = getOrCreateKeysFolder($acmeURL);
+
+    $certificateKeys = $keysDir . '/domains/' . $domain . '/';
+    if (!is_dir($certificateKeys)) {
+        @mkdir($certificateKeys, 0777, true);
+        LEFunctions::createhtaccess($certificateKeys);
+    }
+
+    $certificateKeys = array(
+        "public_key" => $certificateKeys . 'public.pem',
+        "private_key" => $certificateKeys . 'private.pem',
+        "certificate" => $certificateKeys . 'certificate.crt',
+        "fullchain_certificate" => $certificateKeys . 'fullchain.crt',
+        "chain" => $certificateKeys . 'chain.pem',
+        "order" => $certificateKeys . 'order'
+    );
+
+    return $certificateKeys;
+}
+
+//Hack for now
+$default = getCertKeysByDomain('__default__.example.com', $acmeURL);
+$accountKeys = getAccountKeysByDomain($acmeURL);
+
+$client = new LEClient($configs['email'], $acmeURL, LECLient::LOG_DEBUG, $default, $accountKeys);
 
 foreach($config['certs'] as $cert) {
     $domain = $domains[$cert['domain']];
@@ -28,42 +92,10 @@ foreach($config['certs'] as $cert) {
         $certDomain = sprintf('%s.%s', str_replace('*.', '__WILDCARD__', $dom), $cert['domain']);
     }
 
-    $keysDir = dirname(__FILE__) . ($acmeURL === LEClient::LE_PRODUCTION ? '/keys' : '/staging_keys');
-    if (!is_dir($keysDir)) {
-        @mkdir($keysDir, 0777, true);
-        LEFunctions::createhtaccess($keysDir);
-    }
-
-    $accountDir = $keysDir . '__account/';
-    if (!is_dir($accountDir)) {
-        @mkdir($accountDir, 0777, true);
-        LEFunctions::createhtaccess($accountDir);
-    }
-    if (!is_writable($keysDir)) {
-        throw new ErrorException("{$keysDir} is not writable");
-    }
-
-    $certificateKeys = $keysDir . '/domains/' . $certDomain;
-    if (!is_dir($certificateKeys)) {
-        @mkdir($certificateKeys, 0777, true);
-        LEFunctions::createhtaccess($certificateKeys);
-    }
-
-    $accountKeys = [
-        'private_key' => $keysDir . 'private.pem',
-        'public_key' => $keysDir . 'public.pem',
-    ];
-
-    $certificateKeys = array(
-        "public_key" => $certificateKeys.'/public.pem',
-        "private_key" => $certificateKeys.'/private.pem',
-        "certificate" => $certificateKeys.'/certificate.crt',
-        "fullchain_certificate" => $certificateKeys.'/fullchain.crt',
-        "order" => $certificateKeys.'/order'
-    );
+    $certificateKeys = getCertKeysByDomain($certDomain, $acmeURL);
 
     // Initiating the client instance. In this case using the staging server (argument 2) and outputting all status and debug information (argument 3).
-    $client = new LEClient($configs['email'], LEClient::LE_PRODUCTION, LECLient::LOG_DEBUG);
+    $client->setCertificateKeys($certificateKeys);
 
     if (empty($hosts)) {
         continue;
@@ -83,6 +115,9 @@ foreach($config['certs'] as $cert) {
             $adapter = null;
             try {
                 switch ($domain['provider']) {
+                    case 'cpanel':
+                        $adapter = new LetsEncrypt\Providers\CPanel\CPanelAdapter($domain['domain'], $domain['auth']);
+                        break;
                     case 'godaddy':
                         $adapter = new LetsEncrypt\Providers\Godaddy\GodaddyAdapter($domain['domain'], $domain['auth']);
                         break;
