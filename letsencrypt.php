@@ -4,7 +4,7 @@ require 'vendor/autoload.php';
 require_once('./config.inc.php');
 require_once('vendor/yourivw/leclient/LEClient/LEClient.php');
 
-$acmeURL = LEClient::LE_STAGING;
+$acmeURL = LEClient::LE_PRODUCTION;
 
 function getOrCreateKeysFolder($acmeURL): string
 {
