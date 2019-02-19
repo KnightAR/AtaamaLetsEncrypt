@@ -2,16 +2,15 @@
 require 'vendor/autoload.php';
 
 require_once('./config.inc.php');
-require_once('vendor/yourivw/leclient/LEClient/LEClient.php');
 
-$acmeURL = LEClient::LE_PRODUCTION;
+$acmeURL = LEClient\LEClient::LE_PRODUCTION;
 
 function getOrCreateKeysFolder($acmeURL): string
 {
-    $keysDir = dirname(__FILE__) . ($acmeURL === LEClient::LE_PRODUCTION ? '/keys/' : '/staging_keys/');
+    $keysDir = dirname(__FILE__) . ($acmeURL === LEClient\LEClient::LE_PRODUCTION ? '/keys/' : '/staging_keys/');
     if (!is_dir($keysDir)) {
         @mkdir($keysDir, 0777, true);
-        LEFunctions::createhtaccess($keysDir);
+        LEClient\LEFunctions::createhtaccess($keysDir);
     }
     return $keysDir;
 }
@@ -28,7 +27,7 @@ function getAccountKeysByDomain($acmeURL): array
     $accountDir = $keysDir . '/__account/';
     if (!is_dir($accountDir)) {
         @mkdir($accountDir, 0777, true);
-        LEFunctions::createhtaccess($accountDir);
+        LEClient\LEFunctions::createhtaccess($accountDir);
     }
     if (!is_writable($keysDir)) {
         throw new ErrorException("{$keysDir} is not writable");
@@ -49,7 +48,7 @@ function getCertKeysByDomain(string $domain, $acmeURL): array
     $certificateKeys = $keysDir . '/domains/' . $domain . '/';
     if (!is_dir($certificateKeys)) {
         @mkdir($certificateKeys, 0777, true);
-        LEFunctions::createhtaccess($certificateKeys);
+        LEClient\LEFunctions::createhtaccess($certificateKeys);
     }
 
     $certificateKeys = array(
@@ -68,7 +67,7 @@ function getCertKeysByDomain(string $domain, $acmeURL): array
 $default = getCertKeysByDomain('__default__.example.com', $acmeURL);
 $accountKeys = getAccountKeysByDomain($acmeURL);
 
-$client = new LEClient($configs['email'], $acmeURL, LECLient::LOG_DEBUG, $default, $accountKeys);
+$client = new LEClient\LEClient($configs['email'], $acmeURL, LEClient\LEClient::LOG_DEBUG, $default, $accountKeys);
 
 foreach($config['certs'] as $cert) {
     $domain = $domains[$cert['domain']];
@@ -107,7 +106,7 @@ foreach($config['certs'] as $cert) {
 
     if (!$order->allAuthorizationsValid()) {
         // Get the DNS challenges from the pending authorizations.
-        $pending = $order->getPendingAuthorizations(LEOrder::CHALLENGE_TYPE_DNS);
+        $pending = $order->getPendingAuthorizations(LEClient\LEOrder::CHALLENGE_TYPE_DNS);
         // Walk the list of pending authorization DNS challenges.
         if (!empty($pending)) {
             $records = [];
@@ -152,8 +151,8 @@ foreach($config['certs'] as $cert) {
                 if ($adapter->addOrReplaceRecords($records)) {
                     print "Updated DNS records for {$domain['domain']} successful using provider {$domain['provider']} ... moving on" . PHP_EOL;
                     foreach ($pending as $challenge) {
-                        // Let LetsEncrypt verify this challenge, which should have been fulfilled in exampleDNSStart.php.
-                        $order->verifyPendingOrderAuthorization($challenge['identifier'], LEOrder::CHALLENGE_TYPE_DNS);
+                        // Let LetsEncrypt verify this challenge, local check is false cause we already verified locally in our code.
+                        $order->verifyPendingOrderAuthorization($challenge['identifier'], LEClient\LEOrder::CHALLENGE_TYPE_DNS, false);
                     }
 
                     // Check once more whether all authorizations are valid before we can finalize the order.

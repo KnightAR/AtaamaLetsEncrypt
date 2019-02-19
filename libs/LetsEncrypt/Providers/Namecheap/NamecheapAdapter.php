@@ -79,6 +79,10 @@ class NamecheapAdapter extends BaseProviders implements ProviderInterface
         $response = $this->dnsclient->getHosts($this->getSLDTLD());
         $response_data = $response->data();
 
+        if (!isset($response_data['DomainDNSGetHostsResult'])) {
+            return;
+        }
+
         if (isset($response_data['DomainDNSGetHostsResult']['IsUsingOurDNS']) && $response_data['DomainDNSGetHostsResult']['IsUsingOurDNS'] === 'false') {
             throw new \ErrorException($this->getDomain(). " isn't using Namecheap DNS server");
         }

@@ -2,15 +2,75 @@
 require 'vendor/autoload.php';
 
 require_once('./config.inc.php');
-require_once('vendor/yourivw/leclient/LEClient/LEClient.php');
 
-$acmeURL = LEClient::LE_PRODUCTION;
+$acmeURL = LEClient\LEClient::LE_PRODUCTION;
+
+function getOrCreateKeysFolder($acmeURL): string
+{
+    $keysDir = dirname(__FILE__) . ($acmeURL === LEClient\LEClient::LE_PRODUCTION ? '/keys/' : '/staging_keys/');
+    if (!is_dir($keysDir)) {
+        @mkdir($keysDir, 0777, true);
+        LEClient\LEFunctions::createhtaccess($keysDir);
+    }
+    return $keysDir;
+}
+
+/**
+ * @param $acmeURL
+ * @return array
+ * @throws ErrorException
+ */
+function getAccountKeysByDomain($acmeURL): array
+{
+    $keysDir = getOrCreateKeysFolder($acmeURL);
+
+    $accountDir = $keysDir . '/__account/';
+    if (!is_dir($accountDir)) {
+        @mkdir($accountDir, 0777, true);
+        LEClient\LEFunctions::createhtaccess($accountDir);
+    }
+    if (!is_writable($keysDir)) {
+        throw new ErrorException("{$keysDir} is not writable");
+    }
+
+    $accountKeys = [
+        'private_key' => $accountDir . 'private.pem',
+        'public_key' => $accountDir . 'public.pem',
+    ];
+
+    return $accountKeys;
+}
+
+function getCertKeysByDomain(string $domain, $acmeURL): array
+{
+    $keysDir = getOrCreateKeysFolder($acmeURL);
+
+    $certificateKeys = $keysDir . '/domains/' . $domain . '/';
+    if (!is_dir($certificateKeys)) {
+        @mkdir($certificateKeys, 0777, true);
+        LEFunctions::createhtaccess($certificateKeys);
+    }
+
+    $certificateKeys = array(
+        "public_key" => $certificateKeys . 'public.pem',
+        "private_key" => $certificateKeys . 'privkey.pem',
+        "certificate" => $certificateKeys . 'cert.pem',
+        "fullchain_certificate" => $certificateKeys . 'fullchain.pem',
+        "chain" => $certificateKeys . 'chain.pem',
+        "order" => $certificateKeys . 'order'
+    );
+
+    return $certificateKeys;
+}
+
+//Hack for now
+$default = getCertKeysByDomain('__default__.example.com', $acmeURL);
+$accountKeys = getAccountKeysByDomain($acmeURL);
+
+$client = new LEClient\LEClient($configs['email'], $acmeURL, LEClient\LEClient::LOG_DEBUG, $default, $accountKeys);
 
 foreach($config['certs'] as $cert) {
     $domain = $domains[$cert['domain']];
-
-    $domain['auth']['retry'] = false;
-
     $hosts = [];
 
     $certDomain = null;
@@ -31,42 +91,10 @@ foreach($config['certs'] as $cert) {
         $certDomain = sprintf('%s.%s', str_replace('*.', '__WILDCARD__', $dom), $cert['domain']);
     }
 
-    $keysDir = dirname(__FILE__) . ($acmeURL === LEClient::LE_PRODUCTION ? '/keys' : '/staging_keys');
-    if (!is_dir($keysDir)) {
-        @mkdir($keysDir, 0777, true);
-        LEFunctions::createhtaccess($keysDir);
-    }
-
-    $accountDir = $keysDir . '__account/';
-    if (!is_dir($accountDir)) {
-        @mkdir($accountDir, 0777, true);
-        LEFunctions::createhtaccess($accountDir);
-    }
-    if (!is_writable($keysDir)) {
-        throw new ErrorException("{$keysDir} is not writable");
-    }
-
-    $certificateKeys = $keysDir . '/domains/' . $certDomain;
-    if (!is_dir($certificateKeys)) {
-        @mkdir($certificateKeys, 0777, true);
-        LEFunctions::createhtaccess($certificateKeys);
-    }
-
-    $accountKeys = [
-        'private_key' => $keysDir . 'private.pem',
-        'public_key' => $keysDir . 'public.pem',
-    ];
-
-    $certificateKeys = array(
-        "public_key" => $certificateKeys.'/public.pem',
-        "private_key" => $certificateKeys.'/private.pem',
-        "certificate" => $certificateKeys.'/certificate.crt',
-        "fullchain_certificate" => $certificateKeys.'/fullchain.crt',
-        "order" => $certificateKeys.'/order'
-    );
+    $certificateKeys = getCertKeysByDomain($certDomain, $acmeURL);
 
     // Initiating the client instance. In this case using the staging server (argument 2) and outputting all status and debug information (argument 3).
-    $client = new LEClient($configs['email'], LEClient::LE_PRODUCTION, LECLient::LOG_DEBUG);
+    $client->setCertificateKeys($certificateKeys);
 
     if (empty($hosts)) {
         continue;
@@ -78,7 +106,7 @@ foreach($config['certs'] as $cert) {
 
     if (!$order->allAuthorizationsValid()) {
         // Get the DNS challenges from the pending authorizations.
-        $pending = $order->getPendingAuthorizations(LEOrder::CHALLENGE_TYPE_DNS);
+        $pending = $order->getPendingAuthorizations(LEClient\LEOrder::CHALLENGE_TYPE_DNS);
         // Walk the list of pending authorization DNS challenges.
         if (!empty($pending)) {
             $records = [];
@@ -131,7 +159,7 @@ foreach($config['certs'] as $cert) {
                     print "Updated DNS records for {$domain['domain']} successful using provider {$domain['provider']} ... moving on" . PHP_EOL;
                     foreach ($pending as $challenge) {
                         // Let LetsEncrypt verify this challenge, which should have been fulfilled in exampleDNSStart.php.
-                        $order->verifyPendingOrderAuthorization($challenge['identifier'], LEOrder::CHALLENGE_TYPE_DNS);
+                        $order->verifyPendingOrderAuthorization($challenge['identifier'], LEClient\LEOrder::CHALLENGE_TYPE_DNS);
                     }
 
                     // Check once more whether all authorizations are valid before we can finalize the order.
